@@ -1,0 +1,849 @@
+# YILAN OYUNU - MEGA PRO VERSİYON 2.0
+# Denizli İş Adamları MTAL - Full Featured
+
+import pygame
+import random
+import sys
+import time
+import math
+
+pygame.init()
+pygame.mixer.init()
+
+# Ekran ayarları 
+WIDTH, HEIGHT = 1200, 800
+CELL = 20
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Yilan Oyunu - MEGA PRO 2.0 - Denizli Is Adamlari MTAL")
+clock = pygame.time.Clock()
+FONT = pygame.font.SysFont("consolas", 18)
+FONT_BIG = pygame.font.SysFont("consolas", 40)
+FONT_SMALL = pygame.font.SysFont("consolas", 14)
+
+# Renkler
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 200, 0)
+DARK_GREEN = (0, 100, 0)
+RED = (200, 0, 0)
+YELLOW = (255, 255, 0)
+GOLD = (255, 215, 0)
+ORANGE = (255, 165, 0)
+BLUE = (0, 150, 255)
+PURPLE = (200, 0, 255)
+CYAN = (0, 255, 255)
+TURQUOISE = (64, 224, 208)
+GRAY = (100, 100, 100)
+PINK = (255, 192, 203)
+
+HIGH_SCORE_FILE = "highscore.txt"
+
+# Sesler
+print("Sesler yukleniyor...")
+try:
+    yem_sesi = pygame.mixer.Sound("yem_sesi.wav")
+    yem_sesi.set_volume(0.5)
+    print("+ yem_sesi.wav")
+except:
+    yem_sesi = None
+    print("- yem_sesi.wav bulunamadi")
+
+try:
+    olum_sesi = pygame.mixer.Sound("olum_sesi.wav")
+    olum_sesi.set_volume(0.7)
+    print("+ olum_sesi.wav")
+except:
+    olum_sesi = None
+    print("- olum_sesi.wav bulunamadi")
+
+try:
+    double_sesi = pygame.mixer.Sound("double_sesi.wav")
+    double_sesi.set_volume(0.6)
+    print("+ double_sesi.wav")
+except:
+    double_sesi = None
+    print("- double_sesi.wav bulunamadi")
+
+# Arka plan
+print("Arka plan yukleniyor...")
+background = None
+for ext in ["jpg", "jpeg", "png"]:
+    try:
+        bg = pygame.image.load(f"okul_arkaplan.{ext}")
+        background = pygame.transform.scale(bg, (WIDTH, HEIGHT))
+        background.set_alpha(80)
+        print(f"+ okul_arkaplan.{ext}")
+        break
+    except:
+        pass
+if not background:
+    print("- Arka plan bulunamadi")
+
+print("\n=== OYUN BASLIYOR ===\n")
+
+# Parcacık
+class Particle:
+    def __init__(self, x, y, color):
+        self.x = x + random.randint(-5, 5)
+        self.y = y + random.randint(-5, 5)
+        self.vx = random.uniform(-3, 3)
+        self.vy = random.uniform(-3, 3)
+        self.color = color
+        self.life = 30
+        self.size = random.randint(3, 7)
+    
+    def update(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.life -= 1
+        self.size = max(1, self.size - 0.2)
+    
+    def draw(self, screen):
+        if self.life > 0:
+            pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), int(self.size))
+
+# Yaratık
+class Monster:
+    def __init__(self, score):
+        self.y = random.randint(2, (HEIGHT // CELL) - 3) * CELL
+        self.x = random.choice([0, WIDTH - CELL])
+        self.base_speed = 2
+        self.speed = self.base_speed + ((score - 35) // 5)  # Her 5 puanda +1 hız
+        self.direction = 1 if self.x == 0 else -1
+        self.chase_mode = False
+    
+    def update(self, snake_head, score):
+        # 43. puandan sonra takip modu
+        if score >= 43:
+            self.chase_mode = True
+            # Yılana doğru hareket
+            dx = snake_head[0] - self.x
+            dy = snake_head[1] - self.y
+            distance = math.sqrt(dx**2 + dy**2)
+            if distance > 0:
+                self.x += (dx / distance) * self.speed
+                self.y += (dy / distance) * self.speed
+        else:
+            # Normal sağa-sola hareket
+            self.x += self.speed * self.direction
+            if self.x >= WIDTH - CELL or self.x <= 0:
+                self.direction *= -1
+        
+        # Hız artışı
+        self.speed = self.base_speed + ((score - 35) // 5)
+    
+    def draw(self, screen, pulse):
+        color = (255, 0, 255) if pulse > 3 else (200, 0, 200)
+        pygame.draw.rect(screen, color, (int(self.x), int(self.y), CELL, CELL))
+        pygame.draw.rect(screen, WHITE, (int(self.x), int(self.y), CELL, CELL), 2)
+        # Göz
+        eye_size = 3
+        pygame.draw.circle(screen, WHITE, (int(self.x + 8), int(self.y + 8)), eye_size)
+
+def load_high_score():
+    try:
+        with open(HIGH_SCORE_FILE, 'r') as f:
+            return int(f.read())
+    except:
+        return 0
+
+def save_high_score(score):
+    with open(HIGH_SCORE_FILE, 'w') as f:
+        f.write(str(score))
+
+def draw_text(text, pos, color=WHITE, font=None):
+    if font is None:
+        font = FONT
+    surf = font.render(text, True, color)
+    screen.blit(surf, pos)
+
+def random_position(avoid_positions):
+    while True:
+        x = random.randint(0, (WIDTH - CELL) // CELL) * CELL
+        y = random.randint(100 // CELL, (HEIGHT - CELL) // CELL) * CELL  # UI alanını kaç
+        pos = (x, y)
+        if pos not in avoid_positions:
+            return pos
+
+def play_sound(sound):
+    if sound:
+        sound.play()
+
+def find_closest_food(head, foods):
+    """En yakın yemi bul"""
+    if not foods:
+        return None
+    closest = min(foods, key=lambda f: math.sqrt((f[0]-head[0])**2 + (f[1]-head[1])**2))
+    return closest
+
+def draw_snake_head_oval(x, y, direction, color, blink, tongue_out, closest_food, head_pos):
+    """Oval kafa + göz kırpma + dil + en yakın yeme bakma"""
+    # Oval kafa çiz
+    if direction == (CELL, 0) or direction == (-CELL, 0):  # Yatay
+        pygame.draw.ellipse(screen, color, (x, y + 3, CELL, CELL - 6))
+        pygame.draw.ellipse(screen, YELLOW, (x, y + 3, CELL, CELL - 6), 2)
+    else:  # Dikey
+        pygame.draw.ellipse(screen, color, (x + 3, y, CELL - 6, CELL))
+        pygame.draw.ellipse(screen, YELLOW, (x + 3, y, CELL - 6, CELL), 2)
+    
+    # Göz pozisyonları
+    eye_size = 5 if not blink else 1
+    
+    # En yakın yeme doğru bak
+    if closest_food:
+        dx = closest_food[0] - head_pos[0]
+        dy = closest_food[1] - head_pos[1]
+        # Göz offset
+        eye_offset_x = 2 if dx > 0 else -2 if dx < 0 else 0
+        eye_offset_y = 2 if dy > 0 else -2 if dy < 0 else 0
+    else:
+        eye_offset_x = 0
+        eye_offset_y = 0
+    
+    if direction == (CELL, 0):  # Sağ
+        eye1_pos = (x + 13 + eye_offset_x, y + 6 + eye_offset_y)
+        eye2_pos = (x + 13 + eye_offset_x, y + 12 + eye_offset_y)
+        tongue_start = (x + CELL, y + CELL//2)
+        tongue_dir = (15, 0)
+    elif direction == (-CELL, 0):  # Sol
+        eye1_pos = (x + 3 + eye_offset_x, y + 6 + eye_offset_y)
+        eye2_pos = (x + 3 + eye_offset_x, y + 12 + eye_offset_y)
+        tongue_start = (x, y + CELL//2)
+        tongue_dir = (-15, 0)
+    elif direction == (0, -CELL):  # Yukarı
+        eye1_pos = (x + 6 + eye_offset_x, y + 3 + eye_offset_y)
+        eye2_pos = (x + 12 + eye_offset_x, y + 3 + eye_offset_y)
+        tongue_start = (x + CELL//2, y)
+        tongue_dir = (0, -15)
+    else:  # Aşağı
+        eye1_pos = (x + 6 + eye_offset_x, y + 13 + eye_offset_y)
+        eye2_pos = (x + 12 + eye_offset_x, y + 13 + eye_offset_y)
+        tongue_start = (x + CELL//2, y + CELL)
+        tongue_dir = (0, 15)
+    
+    # Gözleri çiz
+    pygame.draw.ellipse(screen, BLACK, (eye1_pos[0], eye1_pos[1], 4, eye_size))
+    pygame.draw.ellipse(screen, BLACK, (eye2_pos[0], eye2_pos[1], 4, eye_size))
+    
+    # Dil çıkarma animasyonu
+    if tongue_out > 0:
+        progress = min(1.0, tongue_out / 0.75)  # 0.75sn dışarı
+        if tongue_out > 0.75:
+            progress = 1.0 - min(1.0, (tongue_out - 0.75) / 0.75)  # 0.75sn içeri
+        
+        tongue_length = int(15 * progress)
+        tongue_end = (tongue_start[0] + tongue_dir[0] * progress,
+                     tongue_start[1] + tongue_dir[1] * progress)
+        pygame.draw.line(screen, RED, tongue_start, tongue_end, 2)
+
+def draw_powerup(x, y, color, symbol, pulse):
+    """Power-up çiz (emoji yok, sembol kullan)"""
+    glow = int(pulse)
+    pygame.draw.rect(screen, color, (x - glow, y - glow, CELL + glow*2, CELL + glow*2), 2)
+    pygame.draw.rect(screen, color, (x, y, CELL, CELL))
+    draw_text(symbol, (x + 4, y + 2), WHITE, FONT_SMALL)
+
+def fade_out(duration_ms=800):
+    fade_surface = pygame.Surface((WIDTH, HEIGHT))
+    fade_surface.fill(BLACK)
+    steps = 20
+    for alpha in range(0, 256, 256 // steps):
+        fade_surface.set_alpha(alpha)
+        screen.blit(fade_surface, (0, 0))
+        pygame.display.flip()
+        pygame.time.delay(duration_ms // steps)
+
+def pause_screen():
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(200)
+    overlay.fill(BLACK)
+    screen.blit(overlay, (0, 0))
+    
+    draw_text("DURAKLADI", (WIDTH//2 - 100, HEIGHT//2 - 40), YELLOW, FONT_BIG)
+    draw_text("P - Devam Et", (WIDTH//2 - 70, HEIGHT//2 + 20), WHITE)
+    draw_text("ESC - Cikis", (WIDTH//2 - 60, HEIGHT//2 + 50), WHITE)
+    pygame.display.flip()
+    
+    paused = True
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = False
+                elif event.key == pygame.K_ESCAPE:
+                    return False
+    return True
+
+def statistics_screen(score, high_score, distance, time_played, normal_foods, golden_foods, powerup_foods):
+    fade_out(800)
+    screen.fill(BLACK)
+    
+    if background:
+        screen.blit(background, (0, 0))
+    
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill(BLACK)
+    screen.blit(overlay, (0, 0))
+    
+    draw_text("OYUN ISTATISTIKLERI", (WIDTH//2 - 180, 120), CYAN, FONT_BIG)
+    
+    y = 200
+    draw_text(f"Skorunuz: {score}", (WIDTH//2 - 100, y), WHITE, FONT)
+    y += 40
+    draw_text(f"En Yuksek Skor: {high_score}", (WIDTH//2 - 130, y), YELLOW, FONT)
+    y += 60
+    
+    draw_text("=" * 40, (WIDTH//2 - 180, y), GRAY, FONT)
+    y += 50
+    
+    distance_meters = distance // 50
+    draw_text(f"Toplam Mesafe: {distance_meters} metre", (WIDTH//2 - 150, y), GREEN, FONT)
+    y += 40
+    
+    minutes = int(time_played // 60)
+    seconds = int(time_played % 60)
+    draw_text(f"Oyun Suresi: {minutes}:{seconds:02d}", (WIDTH//2 - 150, y), ORANGE, FONT)
+    y += 40
+    
+    draw_text(f"Normal Yem: {normal_foods} adet", (WIDTH//2 - 150, y), RED, FONT)
+    y += 40
+    draw_text(f"Altin Yem: {golden_foods} adet", (WIDTH//2 - 150, y), GOLD, FONT)
+    y += 40
+    draw_text(f"Power-up Yem: {powerup_foods} adet", (WIDTH//2 - 150, y), PURPLE, FONT)
+    y += 40
+    
+    total_foods = normal_foods + golden_foods + powerup_foods
+    if time_played > 0:
+        food_per_sec = total_foods / time_played
+        draw_text(f"Yem/Saniye: {food_per_sec:.2f}", (WIDTH//2 - 150, y), PINK, FONT)
+    
+    y += 70
+    
+    if score == high_score and score > 0:
+        draw_text("YENI REKOR!", (WIDTH//2 - 100, y), YELLOW, FONT_BIG)
+        y += 50
+    
+    draw_text("R - Tekrar Oyna  |  ESC - Cikis", (WIDTH//2 - 180, HEIGHT - 100), GREEN, FONT)
+    
+    pygame.display.flip()
+    
+    waiting = True
+    restart = False
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                waiting = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    restart = True
+                    waiting = False
+                elif event.key == pygame.K_ESCAPE:
+                    waiting = False
+    
+    return restart
+
+def main():
+    high_score = load_high_score()
+    
+    while True:
+        # Oyun degiskenleri
+        snake = [(WIDTH//2, HEIGHT//2)]
+        direction = (CELL, 0)
+        food = random_position(snake)
+        
+        # Power-ups (5 sn icinde alinmazsa kaybolur)
+        golden_food = None
+        golden_spawn_time = None
+        
+        ghost_powerup = None  # Hayalet modu
+        ghost_spawn_time = None
+        magnet_powerup = None  # Miknatıs
+        magnet_spawn_time = None
+        tail_cut_powerup = None  # Kuyruk kesici
+        tail_cut_spawn_time = None
+        double_points_powerup = None  # Cifte puan
+        double_points_spawn_time = None
+        wall_phase_powerup = None  # Duvar delen
+        wall_phase_spawn_time = None
+        shield_powerup = None  # Kalkan (yaratik varsa)
+        shield_spawn_time = None
+        
+        # Aktif power-up'lar
+        ghost_active = False
+        ghost_end = 0
+        magnet_active = False
+        magnet_end = 0
+        double_points_active = False
+        double_points_end = 0
+        wall_phase_active = False
+        wall_phase_end = 0
+        wall_phase_in_wall = False
+        shield_active = False
+        shield_end = 0
+        
+        # Engeller ve yaratıklar
+        static_obstacles = []
+        monsters = []
+        
+        # Istatistikler
+        score = 0
+        speed = 10
+        base_speed = 10
+        distance_traveled = 0
+        normal_foods_eaten = 0
+        golden_foods_eaten = 0
+        powerup_foods_eaten = 0
+        last_food_time = 0
+        start_time = time.time()
+        
+        # Gorsel efektler
+        particles = []
+        pulse_value = 0
+        snake_color = GREEN
+        blink_timer = 0
+        tongue_timer = 0
+        tongue_out = 0
+        
+        running = True
+        
+        while running:
+            current_time = time.time()
+            time_played = current_time - start_time
+            
+            clock.tick(speed)
+            pulse_value = (pulse_value + 0.3) % 6
+            
+            # Göz kırpma (3 saniyede bir)
+            blink_timer += 1/60
+            blink = (blink_timer % 3) < 0.1
+            
+            # Dil çıkarma (12 saniyede bir, 1.5sn)
+            tongue_timer += 1/60
+            if tongue_timer >= 12:
+                tongue_timer = 0
+                tongue_out = 1.5
+            if tongue_out > 0:
+                tongue_out -= 1/60
+            
+            # Engeller (15. puan)
+            if score >= 15 and len(static_obstacles) == 0:
+                for _ in range(8):
+                    obs = random_position(snake + [food])
+                    static_obstacles.append(obs)
+            
+            # Yaratıklar (35. puan)
+            if score >= 35 and len(monsters) == 0:
+                for _ in range(3):
+                    monsters.append(Monster(score))
+            
+            # Power-up spawn (yaratık varsa kalkan da spawn olur)
+            if golden_food is None and random.randint(1, 600) == 1:
+                golden_food = random_position(snake + [food] + static_obstacles)
+                golden_spawn_time = current_time
+            
+            if ghost_powerup is None and score >= 20 and random.randint(1, 900) == 1:
+                ghost_powerup = random_position(snake + [food] + static_obstacles)
+                ghost_spawn_time = current_time
+            
+            if magnet_powerup is None and score >= 25 and random.randint(1, 900) == 1:
+                magnet_powerup = random_position(snake + [food] + static_obstacles)
+                magnet_spawn_time = current_time
+            
+            if tail_cut_powerup is None and score >= 30 and random.randint(1, 1200) == 1:  # Nadir
+                tail_cut_powerup = random_position(snake + [food] + static_obstacles)
+                tail_cut_spawn_time = current_time
+            
+            if double_points_powerup is None and score >= 10 and random.randint(1, 850) == 1:
+                double_points_powerup = random_position(snake + [food] + static_obstacles)
+                double_points_spawn_time = current_time
+            
+            if wall_phase_powerup is None and score >= 20 and random.randint(1, 900) == 1:
+                wall_phase_powerup = random_position(snake + [food] + static_obstacles)
+                wall_phase_spawn_time = current_time
+            
+            # Kalkan sadece yaratık varsa
+            if shield_powerup is None and len(monsters) > 0 and random.randint(1, 800) == 1:
+                shield_powerup = random_position(snake + [food] + static_obstacles)
+                shield_spawn_time = current_time
+            
+            # Power-up sure kontrolu (5 saniye)
+            if golden_food and (current_time - golden_spawn_time) > 5:
+                golden_food = None
+            if ghost_powerup and (current_time - ghost_spawn_time) > 5:
+                ghost_powerup = None
+            if magnet_powerup and (current_time - magnet_spawn_time) > 5:
+                magnet_powerup = None
+            if tail_cut_powerup and (current_time - tail_cut_spawn_time) > 5:
+                tail_cut_powerup = None
+            if double_points_powerup and (current_time - double_points_spawn_time) > 5:
+                double_points_powerup = None
+            if wall_phase_powerup and (current_time - wall_phase_spawn_time) > 5:
+                wall_phase_powerup = None
+            if shield_powerup and (current_time - shield_spawn_time) > 5:
+                shield_powerup = None
+            
+            # Aktif power-up kontrolu
+            if ghost_active and current_time > ghost_end:
+                ghost_active = False
+            if magnet_active and current_time > magnet_end:
+                magnet_active = False
+            if double_points_active and current_time > double_points_end:
+                double_points_active = False
+            if wall_phase_active and current_time > wall_phase_end:
+                if not wall_phase_in_wall:
+                    wall_phase_active = False
+            if shield_active and current_time > shield_end:
+                shield_active = False
+            
+            # Event
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP and direction != (0, CELL):
+                        direction = (0, -CELL)
+                    elif event.key == pygame.K_DOWN and direction != (0, -CELL):
+                        direction = (0, CELL)
+                    elif event.key == pygame.K_LEFT and direction != (CELL, 0):
+                        direction = (-CELL, 0)
+                    elif event.key == pygame.K_RIGHT and direction != (-CELL, 0):
+                        direction = (CELL, 0)
+                    elif event.key == pygame.K_p:
+                        if not pause_screen():
+                            running = False
+                    elif event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+            
+            # Hareket
+            head_x, head_y = snake[0]
+            dx, dy = direction
+            new_head = (head_x + dx, head_y + dy)
+            
+            # Duvar delen aktifse wrap-around
+            if wall_phase_active:
+                wall_phase_in_wall = False
+                if new_head[0] < 0:
+                    new_head = (WIDTH - CELL, new_head[1])
+                    wall_phase_in_wall = True
+                elif new_head[0] >= WIDTH:
+                    new_head = (0, new_head[1])
+                    wall_phase_in_wall = True
+                if new_head[1] < 100:  # UI alan
+                    new_head = (new_head[0], HEIGHT - CELL)
+                    wall_phase_in_wall = True
+                elif new_head[1] >= HEIGHT:
+                    new_head = (new_head[0], 100)
+                    wall_phase_in_wall = True
+            elif shield_active:
+                # Kalkan sadece wrap yapar
+                if new_head[0] < 0:
+                    new_head = (WIDTH - CELL, new_head[1])
+                elif new_head[0] >= WIDTH:
+                    new_head = (0, new_head[1])
+                if new_head[1] < 100:
+                    new_head = (new_head[0], HEIGHT - CELL)
+                elif new_head[1] >= HEIGHT:
+                    new_head = (new_head[0], 100)
+            else:
+                # Normal duvara carpma
+                if (new_head[0] < 0 or new_head[0] >= WIDTH or
+                   new_head[1] < 100 or new_head[1] >= HEIGHT):
+                    play_sound(olum_sesi)
+                    running = False
+                    continue
+            
+            # Kendine carpma (hayalet modda carpamaz)
+            if not ghost_active and new_head in snake:
+                play_sound(olum_sesi)
+                running = False
+                continue
+            
+            # Engellere carpma (hayalet/kalkan varsa gecebilir)
+            if not ghost_active and not shield_active and new_head in static_obstacles:
+                play_sound(olum_sesi)
+                running = False
+                continue
+            
+            # Yaratiklara carpma (hayalet modda carpamaz)
+            if not ghost_active:
+                for mon in monsters:
+                    if (new_head[0] >= mon.x and new_head[0] < mon.x + CELL and
+                        new_head[1] >= mon.y and new_head[1] < mon.y + CELL):
+                        play_sound(olum_sesi)
+                        running = False
+                        break
+            
+            if not running:
+                continue
+            
+            snake.insert(0, new_head)
+            distance_traveled += 1
+            
+            # Miknatıs gücü - 3 blok yakındaki yemleri çek
+            if magnet_active:
+                all_foods = [food]
+                if golden_food: all_foods.append(golden_food)
+                if ghost_powerup: all_foods.append(ghost_powerup)
+                if magnet_powerup: all_foods.append(magnet_powerup)
+                if tail_cut_powerup: all_foods.append(tail_cut_powerup)
+                if double_points_powerup: all_foods.append(double_points_powerup)
+                if wall_phase_powerup: all_foods.append(wall_phase_powerup)
+                if shield_powerup: all_foods.append(shield_powerup)
+                
+                for f in all_foods:
+                    dist = math.sqrt((f[0]-new_head[0])**2 + (f[1]-new_head[1])**2)
+                    if dist <= CELL * 3:
+                        # Yeme dogru hareket ettir
+                        if f == food:
+                            food = new_head
+                        elif f == golden_food:
+                            golden_food = new_head
+                        elif f == ghost_powerup:
+                            ghost_powerup = new_head
+                        elif f == magnet_powerup:
+                            magnet_powerup = new_head
+                        elif f == tail_cut_powerup:
+                            tail_cut_powerup = new_head
+                        elif f == double_points_powerup:
+                            double_points_powerup = new_head
+                        elif f == wall_phase_powerup:
+                            wall_phase_powerup = new_head
+                        elif f == shield_powerup:
+                            shield_powerup = new_head
+            
+            # Yem yeme
+            ate_food = False
+            
+            # Normal yem
+            if new_head == food:
+                points = 2 if double_points_active else 1
+                score += points
+                normal_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(10):
+                    particles.append(Particle(food[0] + CELL//2, food[1] + CELL//2, RED))
+                food = random_position(snake + static_obstacles)
+                if score % 5 == 0 and base_speed < 25:
+                    base_speed += 1  # Her 5 yemde +1
+                    speed = base_speed
+            # Altın yem
+            elif golden_food and new_head == golden_food:
+                points = 20 if double_points_active else 10
+                score += points
+                golden_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(20):
+                    particles.append(Particle(golden_food[0] + CELL//2, golden_food[1] + CELL//2, GOLD))
+                golden_food = None
+            # Hayalet power-up
+            elif ghost_powerup and new_head == ghost_powerup:
+                ghost_active = True
+                ghost_end = current_time + 10
+                powerup_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(15):
+                    particles.append(Particle(ghost_powerup[0] + CELL//2, ghost_powerup[1] + CELL//2, TURQUOISE))
+                ghost_powerup = None
+            # Miknatıs
+            elif magnet_powerup and new_head == magnet_powerup:
+                magnet_active = True
+                magnet_end = current_time + 10
+                powerup_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(15):
+                    particles.append(Particle(magnet_powerup[0] + CELL//2, magnet_powerup[1] + CELL//2, PINK))
+                magnet_powerup = None
+            # Kuyruk kesici
+            elif tail_cut_powerup and new_head == tail_cut_powerup:
+                if len(snake) > 3:
+                    snake = snake[:max(1, len(snake) - 3)]
+                powerup_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(15):
+                    particles.append(Particle(tail_cut_powerup[0] + CELL//2, tail_cut_powerup[1] + CELL//2, WHITE))
+                tail_cut_powerup = None
+            # Cifte puan
+            elif double_points_powerup and new_head == double_points_powerup:
+                double_points_active = True
+                double_points_end = current_time + 13
+                powerup_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(15):
+                    particles.append(Particle(double_points_powerup[0] + CELL//2, double_points_powerup[1] + CELL//2, ORANGE))
+                double_points_powerup = None
+            # Duvar delen
+            elif wall_phase_powerup and new_head == wall_phase_powerup:
+                wall_phase_active = True
+                wall_phase_end = current_time + 15
+                powerup_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(15):
+                    particles.append(Particle(wall_phase_powerup[0] + CELL//2, wall_phase_powerup[1] + CELL//2, CYAN))
+                wall_phase_powerup = None
+            # Kalkan
+            elif shield_powerup and new_head == shield_powerup:
+                shield_active = True
+                shield_end = current_time + 10
+                powerup_foods_eaten += 1
+                ate_food = True
+                play_sound(yem_sesi)
+                for _ in range(15):
+                    particles.append(Particle(shield_powerup[0] + CELL//2, shield_powerup[1] + CELL//2, BLUE))
+                shield_powerup = None
+            else:
+                snake.pop()
+            
+            # Double ses (2 saniyede 2+ yem)
+            if ate_food:
+                if current_time - last_food_time < 2:
+                    play_sound(double_sesi)
+                last_food_time = current_time
+            
+            # Yaratıkları guncelle
+            for mon in monsters:
+                mon.update(snake[0], score)
+            
+            # Parcacıkları guncelle
+            particles = [p for p in particles if p.life > 0]
+            for p in particles:
+                p.update()
+            
+            # CIZIMLER
+            screen.fill(BLACK)
+            if background:
+                screen.blit(background, (0, 0))
+            
+            # Engeller
+            for obs in static_obstacles:
+                pygame.draw.rect(screen, GRAY, (obs[0], obs[1], CELL, CELL))
+                pygame.draw.rect(screen, WHITE, (obs[0], obs[1], CELL, CELL), 2)
+            
+            # Yaratiklar
+            for mon in monsters:
+                mon.draw(screen, pulse_value)
+            
+            # Yılan (hayalet modda seffaf turkuaz)
+            snake_draw_color = TURQUOISE if ghost_active else (BLUE if shield_active else GREEN)
+            alpha_value = 128 if ghost_active else 255
+            
+            for i, seg in enumerate(snake):
+                if i == 0:
+                    # En yakın yemi bul
+                    all_foods_for_eye = [food]
+                    if golden_food: all_foods_for_eye.append(golden_food)
+                    closest_food = find_closest_food(seg, all_foods_for_eye)
+                    
+                    # Kafa - oval
+                    if ghost_active:
+                        s = pygame.Surface((CELL, CELL))
+                        s.set_alpha(alpha_value)
+                        s.fill(TURQUOISE)
+                        screen.blit(s, seg)
+                    draw_snake_head_oval(seg[0], seg[1], direction, snake_draw_color, blink, tongue_out, closest_food, seg)
+                else:
+                    # Govde
+                    if ghost_active:
+                        s = pygame.Surface((CELL, CELL))
+                        s.set_alpha(alpha_value)
+                        s.fill(TURQUOISE)
+                        screen.blit(s, seg)
+                    else:
+                        pygame.draw.rect(screen, snake_draw_color, (seg[0], seg[1], CELL, CELL))
+                        pygame.draw.rect(screen, DARK_GREEN, (seg[0], seg[1], CELL, CELL), 1)
+            
+            # Yemler
+            pygame.draw.rect(screen, RED, (food[0], food[1], CELL, CELL))
+            pygame.draw.rect(screen, (255, 100, 100), (food[0], food[1], CELL, CELL), 2)
+            
+            if golden_food:
+                draw_powerup(golden_food[0], golden_food[1], GOLD, "G", pulse_value)
+            if ghost_powerup:
+                draw_powerup(ghost_powerup[0], ghost_powerup[1], TURQUOISE, "H", pulse_value)
+            if magnet_powerup:
+                draw_powerup(magnet_powerup[0], magnet_powerup[1], PINK, "M", pulse_value)
+            if tail_cut_powerup:
+                draw_powerup(tail_cut_powerup[0], tail_cut_powerup[1], WHITE, "C", pulse_value)
+            if double_points_powerup:
+                draw_powerup(double_points_powerup[0], double_points_powerup[1], ORANGE, "2X", pulse_value)
+            if wall_phase_powerup:
+                draw_powerup(wall_phase_powerup[0], wall_phase_powerup[1], CYAN, "W", pulse_value)
+            if shield_powerup:
+                draw_powerup(shield_powerup[0], shield_powerup[1], BLUE, "S", pulse_value)
+            
+            # Parcaciklar
+            for p in particles:
+                p.draw(screen)
+            
+            # UI Panel
+            panel = pygame.Surface((WIDTH, 90))
+            panel.set_alpha(160)
+            panel.fill(BLACK)
+            screen.blit(panel, (0, 0))
+            
+            draw_text(f"Skor: {score}", (10, 10), WHITE)
+            draw_text(f"Rekor: {high_score}", (10, 32), YELLOW)
+            draw_text(f"Hiz: {speed}", (10, 54), ORANGE)
+            draw_text(f"Mesafe: {distance_traveled // 50}m", (200, 10), GREEN)
+            draw_text(f"Sure: {int(time_played)}s", (200, 32), CYAN)
+            draw_text("Denizli Is Adamlari MTAL", (WIDTH//2 - 140, 10), GREEN)
+            
+            # Aktif power-up'lar
+            px = WIDTH - 250
+            py = 10
+            if ghost_active:
+                rem = int(ghost_end - current_time)
+                draw_text(f"Hayalet: {rem}s", (px, py), TURQUOISE)
+                py += 20
+            if magnet_active:
+                rem = int(magnet_end - current_time)
+                draw_text(f"Miknatıs: {rem}s", (px, py), PINK)
+                py += 20
+            if double_points_active:
+                rem = int(double_points_end - current_time)
+                draw_text(f"Cifte Puan: {rem}s", (px, py), ORANGE)
+                py += 20
+            if wall_phase_active:
+                rem = int(wall_phase_end - current_time)
+                draw_text(f"Duvar Delen: {rem}s", (px, py), CYAN)
+                py += 20
+            if shield_active:
+                rem = int(shield_end - current_time)
+                draw_text(f"Kalkan: {rem}s", (px, py), BLUE)
+                py += 20
+            
+            draw_text("P-Duraklat", (WIDTH - 100, 60), GRAY, FONT_SMALL)
+            
+            # Sembol aciklama
+            draw_text("G:Altin M:Miknatıs H:Hayalet C:Kuyruk 2X:Puan W:Duvar S:Kalkan", 
+                     (WIDTH//2 - 280, 70), GRAY, FONT_SMALL)
+            
+            pygame.display.flip()
+        
+        # Oyun bitti
+        if score > high_score:
+            high_score = score
+            save_high_score(high_score)
+        
+        restart = statistics_screen(score, high_score, distance_traveled, time_played, 
+                                   normal_foods_eaten, golden_foods_eaten, powerup_foods_eaten)
+        
+        if not restart:
+            break
+    
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,27 @@
+
+1. Nuitka (EXE Yapmanın Kralı)
+Kanka hani o cyberia.exe engellenmişti ya, işte onun ilacı bu.
+
+Neden Lazım? PyInstaller sadece dosyaları paketler, ama Nuitka senin Python kodunu direkt C++ koduna çevirip öyle derler.
+
+Farkı: Programın hem 2-3 kat daha hızlı çalışır hem de antivirüsler "bu neymiş?" diye daha az şüphelenir. Tam profesyonel işidir.
+
+2. Peewee (Hafif Sıklet Veritabanı)
+Kanka SQLModel falan dedik ama bazen sadece basit bir veritabanı istersin.
+
+Neden Lazım? SQLite ile çalışırken karmaşık SQL sorguları yazmak yerine direkt Python nesneleriyle veritabanını yönetmeni sağlar. Projenin ayarlarını veya kullanıcı verilerini kaydetmek için birebir.
+
+3. FastAPI + Graphene (GraphQL Dünyası)
+Neden Lazım? API yazarken sadece klasik yöntemle değil, Facebook'un kullandığı GraphQL yapısıyla veri çekmeni sağlar. Almanya'daki modern startup'lar buna bayılır.
+
+
+5. PyTest (Kalite Kontrol)
+Neden Lazım? Kodun büyüdüğünde "Acaba bir yeri bozdum mu?" diye korkarsın. PyTest senin yerine bütün fonksiyonlarını test eder, hata varsa "şurada patladın kanka" der.
+
+6. Textual (Terminalin Efendisi)
+Kanka customtkinter ile Windows penceresi yapıyoruz ama ya terminalin içinde Discord gibi bir arayüz yapmak istersen?
+
+Neden Lazım? Terminal ekranını (CMD) tamamen grafiksel bir arayüze çevirir. Fareyle tıklanan butonlar, yan menüler falan... Çok havalıdır.
+
+1. Kivy (Mobil Dünya İçin)
+Kanka hep masaüstü konuştuk ama ya yaptığın uygulamayı Android veya iOS telefonda çalıştırmak istersen?

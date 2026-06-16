@@ -1,0 +1,82 @@
+[
+    {
+        "AdSoyad": "Hürüyet Çamurcuoğlu",
+        "Eposta": "ertasnecmettin@example.org",
+        "Adres": "02776 Karadeniz Stravenue\nÇetinside, NY 46568",
+        "SiberKod": "2018a999dcc156781531b1951c419a2eb8456b2fc3c4d7a7834056a14faffaad",
+        "Sirket": "Tekfen İnşaat",
+        "KayitTarihi": "2005-11-12"
+    },
+    {
+        "AdSoyad": "Eroğul İmren Akar Eraslan",
+        "Eposta": "ucorlu@example.org",
+        "Adres": "7377 Güçlü Road Apt. 310\nLake Süheyda, VI 86696",
+        "SiberKod": "fee131a366f7916ce60c2b4a3ff63f0149a3339b005b9e53af543676b8707812",
+        "Sirket": "Manço A.Ş.",
+        "KayitTarihi": "2015-05-19"
+    },
+    {
+        "AdSoyad": "Öğr. Baydu Ertan Alemdar",
+        "Eposta": "isama@example.net",
+        "Adres": "1962 Nebiha Grove Apt. 206\nEast Bilgen, KS 12774",
+        "SiberKod": "c2a10b37cc73dfdec5775c940e44a7e309911f44eb6b39964634340edb4c6a51",
+        "Sirket": "Türk Tic.",
+        "KayitTarihi": "2012-11-05"
+    },
+    {
+        "AdSoyad": "Müjde Yorulmaz",
+        "Eposta": "laikakoruturk@example.com",
+        "Adres": "2712 Sabihe Shore Suite 256\nOnursutown, WA 01029",
+        "SiberKod": "fc64656a24c5112e73805ab05d6d220bafa8d8c87119a29a9095ecb867b176db",
+        "Sirket": "Ergül Bilir A.Ş.",
+        "KayitTarihi": "2019-09-13"
+    },
+    {
+        "AdSoyad": "Aral Ertaş Alemdar",
+        "Eposta": "gokperidumanli@example.net",
+        "Adres": "372 Hürmet Estate Apt. 930\nTürkland, UT 59802",
+        "SiberKod": "bee3f7749d6cc7049e96c7c2b65848afae32040c2e9f25e216d9880b640bde23",
+        "Sirket": "Arsoy Şti.",
+        "KayitTarihi": "2007-09-13"
+    },
+    {
+        "AdSoyad": "Sahil Şafak Ülker",
+        "Eposta": "amacyaman@example.com",
+        "Adres": "PSC 4361, Box 3939\nAPO AE 72830",
+        "SiberKod": "11509aa38279bd4e4b268ebe4fe31f08d82ea3e57a45168e165f0979307b4794",
+        "Sirket": "İstanbul Altın Rafinerisi",
+        "KayitTarihi": "2019-09-17"
+    },
+    {
+        "AdSoyad": "Semine İhsanoğlu",
+        "Eposta": "canguryorulmaz@example.net",
+        "Adres": "557 Karadeniz Lakes\nPort Özlüfurt, ND 83949",
+        "SiberKod": "4aaee0d3cc228ec5d630899793f0d31f52b6f11dd0037e3ee6f3adf72d0a3540",
+        "Sirket": "Mapa İnşaat",
+        "KayitTarihi": "2006-07-16"
+    },
+    {
+        "AdSoyad": "Zerafet Şama",
+        "Eposta": "zenginermutlu@example.net",
+        "Adres": "46426 Risalet Island Suite 626\nPort Kayıthaven, NY 59018",
+        "SiberKod": "c5db41f31c0d07afecb404b24cbc53b7ab1e8d90bc9de13e1975ac56c335b3a9",
+        "Sirket": "Ülker Dumanlı Ltd.",
+        "KayitTarihi": "2006-08-14"
+    },
+    {
+        "AdSoyad": "Öğr. Günebakan Kısakürek Durmuş",
+        "Eposta": "rafihyilmaz@example.com",
+        "Adres": "4472 Laze Centers\nSoyluborough, AK 02449",
+        "SiberKod": "f57460d23fca905c07462c93c7162412d5f01a417d74280d40eabd2271658ce1",
+        "Sirket": "Sakarya San.",
+        "KayitTarihi": "2019-07-19"
+    },
+    {
+        "AdSoyad": "Örfiye Güçlü",
+        "Eposta": "us70@example.net",
+        "Adres": "043 Şafak Ridge Apt. 426\nDuranview, FM 92030",
+        "SiberKod": "ab07451c4336f514991e466635ecbeef82c83884def722d1aecc31b8a1f033e1",
+        "Sirket": "Limak İnşaat",
+        "KayitTarihi": "2011-06-08"
+    }
+]

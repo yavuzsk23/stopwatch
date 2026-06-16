@@ -1,0 +1,25 @@
+
+
+Çok oyunculu mod: Ýki yýlan ayný ekranda rekabet edebilir.
+
+
+
+
+Tema deðiþimi: Farklý arka planlar, renk paletleri, gece/gündüz modu.
+
+Görevler / baþarýlar: “10 yem ye”, “hiç duvara çarpma” gibi görevler.
+
+Fizik efektleri: Yýlanýn kývrýmlarýnýn daha gerçekçi görünmesi, yemlerin zýplamasý.
+
+
+
+Rastgele olaylar: Aniden çýkan bonus yemler, kaybolan engeller.
+
+ Örnek Geliþtirme Yönleri
+Kategori	Öneri
+Oynanýþ	Power-up, düþman yýlan, görevler
+Görsellik	Tema deðiþimi, gece/gündüz modu, fizik efektleri
+Sosyal	Skor tablosu, çok oyunculu
+Atmosfer	
+Ses efektleri, müzik, rastgele olaylar
+

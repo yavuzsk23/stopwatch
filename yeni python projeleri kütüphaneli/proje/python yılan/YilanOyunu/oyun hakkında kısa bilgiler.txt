@@ -1,0 +1,288 @@
+Kontroller ve özelleştirme
+
+
+Kontroller: Ok tuşları ile oynanır Esc ile çıkış yapılır R ile tekrar başlatılır
+
+Hız ve boyut: CELL, WIDTH, HEIGHT, speed değişkenlerini değiştirerek oyun alanı ve hız ayarlanabilir.
+
+
+
+
+
+oyunda yapılan düzenlemeler 
+1. Yem asla yılanın üstüne düşmüyor  random_food_position(snake) bunu kontrol ediyor
+2. High Score sistemi  En yüksek skorun kaydediliyor (highscore.txt dosyasına)
+3.Restart özelliği  Oyun bitince "R" tuşuyla tekrar oynayabiliyorsun
+4. Yeni rekor yazısı  Rekor kırdığında "YENİ REKOR!" yazısı çıkıyor
+5.Görsel iyileştirmeler:
+
+1.Yılanın başı sarı, gövdesi yeşil
+2.Ekranda high score da gösteriliyor
+3.Hız göstergesi eklendi
+
+6.Hız limiti - Hız maksimum 25'e kadar çıkıyor
+7.kenarlar güzelleşti 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Yılan Oyunu - Denizli İş Adamları MTAL
+# Ses ve arka plan fotoğraflı versiyon
+
+import pygame
+import random
+import sys
+
+pygame.init()
+pygame.mixer.init()
+
+# Ekran ayarları
+WIDTH, HEIGHT = 800, 600
+CELL = 20
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Yılan Oyunu - Denizli İş Adamları MTAL")
+clock = pygame.time.Clock()
+FONT = pygame.font.SysFont("consolas", 20)
+FONT_BIG = pygame.font.SysFont("consolas", 40)
+
+# Renkler
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 200, 0)
+RED = (200, 0, 0)
+YELLOW = (255, 255, 0)
+
+# High score dosyası
+HIGH_SCORE_FILE = "highscore.txt"
+
+# SESLERİ YÜKLE
+print("Sesler yükleniyor...")
+try:
+    yem_sesi = pygame.mixer.Sound("yem_sesi.wav")
+    yem_sesi.set_volume(0.5)
+    print("✓ yem_sesi.wav yüklendi!")
+except:
+    yem_sesi = None
+    print("✗ yem_sesi.wav bulunamadı!")
+
+try:
+    olum_sesi = pygame.mixer.Sound("olum_sesi.wav")
+    olum_sesi.set_volume(0.7)
+    print("✓ olum_sesi.wav yüklendi!")
+except:
+    olum_sesi = None
+    print("✗ olum_sesi.wav bulunamadı!")
+
+# ARKA PLAN RESMİNİ YÜKLE
+print("Arka plan yükleniyor...")
+background = None
+try:
+    background_original = pygame.image.load("okul_arkaplan.jpg")
+    background = pygame.transform.scale(background_original, (WIDTH, HEIGHT))
+    background.set_alpha(80)
+    print("✓ okul_arkaplan.jpg yüklendi!")
+except:
+    try:
+        background_original = pygame.image.load("okul_arkaplan.jpeg")
+        background = pygame.transform.scale(background_original, (WIDTH, HEIGHT))
+        background.set_alpha(80)
+        print("✓ okul_arkaplan.jpeg yüklendi!")
+    except:
+        print("✗ Arka plan fotoğrafı bulunamadı!")
+
+print("\n--- OYUN BAŞLIYOR ---\n")
+
+def load_high_score():
+    try:
+        with open(HIGH_SCORE_FILE, 'r') as f:
+            return int(f.read())
+    except:
+        return 0
+
+def save_high_score(score):
+    with open(HIGH_SCORE_FILE, 'w') as f:
+        f.write(str(score))
+
+def draw_text(text, pos, color=WHITE, font=None):
+    if font is None:
+        font = FONT
+    surf = font.render(text, True, color)
+    screen.blit(surf, pos)
+
+def random_food_position(snake):
+    while True:
+        x = random.randint(0, (WIDTH - CELL) // CELL) * CELL
+        y = random.randint(0, (HEIGHT - CELL) // CELL) * CELL
+        pos = (x, y)
+        if pos not in snake:
+            return pos
+
+def play_sound(sound):
+    if sound:
+        sound.play()
+
+def game_over_screen(score, high_score):
+    screen.fill(BLACK)
+    
+    if background:
+        screen.blit(background, (0, 0))
+    
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill(BLACK)
+    screen.blit(overlay, (0, 0))
+    
+    draw_text("OYUN BİTTİ!", (WIDTH//2 - 120, HEIGHT//2 - 80), RED, FONT_BIG)
+    draw_text(f"Skorunuz: {score}", (WIDTH//2 - 80, HEIGHT//2 - 20), WHITE)
+    draw_text(f"En Yüksek Skor: {high_score}", (WIDTH//2 - 110, HEIGHT//2 + 20), YELLOW)
+    
+    if score == high_score and score > 0:
+        draw_text("YENİ REKOR!", (WIDTH//2 - 80, HEIGHT//2 - 50), YELLOW)
+    
+    draw_text("R - Tekrar Oyna", (WIDTH//2 - 80, HEIGHT//2 + 70), GREEN)
+    draw_text("ESC - Çıkış", (WIDTH//2 - 60, HEIGHT//2 + 100), WHITE)
+    
+    pygame.display.flip()
+    
+    waiting = True
+    restart = False
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                waiting = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    restart = True
+                    waiting = False
+                elif event.key == pygame.K_ESCAPE:
+                    waiting = False
+    
+    return restart
+
+def main():
+    high_score = load_high_score()
+    
+    while True:
+        snake = [(WIDTH//2, HEIGHT//2)]
+        direction = (CELL, 0)
+        food = random_food_position(snake)
+        score = 0
+        speed = 10
+        running = True
+        
+        while running:
+            clock.tick(speed)
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP and direction != (0, CELL):
+                        direction = (0, -CELL)
+                    elif event.key == pygame.K_DOWN and direction != (0, -CELL):
+                        direction = (0, CELL)
+                    elif event.key == pygame.K_LEFT and direction != (CELL, 0):
+                        direction = (-CELL, 0)
+                    elif event.key == pygame.K_RIGHT and direction != (-CELL, 0):
+                        direction = (CELL, 0)
+                    elif event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+            
+            head_x, head_y = snake[0]
+            dx, dy = direction
+            new_head = (head_x + dx, head_y + dy)
+            
+            # Duvara çarpma
+            if (new_head[0] < 0 or new_head[0] >= WIDTH or
+               new_head[1] < 0 or new_head[1] >= HEIGHT):
+                play_sound(olum_sesi)  # ÖLÜM SESİ
+                running = False
+                continue
+            
+            # Kendine çarpma
+            if new_head in snake:
+                play_sound(olum_sesi)  # ÖLÜM SESİ
+                running = False
+                continue
+            
+            snake.insert(0, new_head)
+            
+            # Yem yeme
+            if new_head == food:
+                score += 1
+                play_sound(yem_sesi)  # YEM SESİ
+                food = random_food_position(snake)
+                if score % 5 == 0 and speed < 25:
+                    speed += 2
+            else:
+                snake.pop()
+            
+            # ÇİZİMLER
+            screen.fill(BLACK)
+            
+            # ARKA PLAN FOTOĞRAFI
+            if background:
+                screen.blit(background, (0, 0))
+            
+            # Yılan
+            for i, seg in enumerate(snake):
+                if i == 0:
+                    pygame.draw.rect(screen, YELLOW, (seg[0], seg[1], CELL, CELL))
+                    pygame.draw.rect(screen, WHITE, (seg[0], seg[1], CELL, CELL), 2)
+                else:
+                    pygame.draw.rect(screen, GREEN, (seg[0], seg[1], CELL, CELL))
+                    pygame.draw.rect(screen, (0, 150, 0), (seg[0], seg[1], CELL, CELL), 1)
+            
+            # Yem
+            pygame.draw.rect(screen, RED, (food[0], food[1], CELL, CELL))
+            pygame.draw.rect(screen, (255, 100, 100), (food[0], food[1], CELL, CELL), 2)
+            
+            # Skor paneli
+            panel_surface = pygame.Surface((WIDTH, 60))
+            panel_surface.set_alpha(150)
+            panel_surface.fill(BLACK)
+            screen.blit(panel_surface, (0, 0))
+            
+            draw_text(f"Skor: {score}", (10, 10), WHITE)
+            draw_text(f"En Yüksek: {high_score}", (10, 35), YELLOW)
+            draw_text(f"Hız: {speed}", (WIDTH - 100, 10), WHITE)
+            draw_text("Denizli İş Adamları MTAL", (WIDTH//2 - 120, 10), GREEN)
+            
+            pygame.display.flip()
+        
+        if score > high_score:
+            high_score = score
+            save_high_score(high_score)
+        
+        restart = game_over_screen(score, high_score)
+        
+        if not restart:
+            break
+    
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+

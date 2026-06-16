@@ -1,0 +1,22 @@
+Masaüstü / GUI
+Hesap makinesi (Tkinter, PyQt, Pygame)
+
+Not defteri / Text editor
+
+Resim görüntüleyici
+
+Müzik çalar
+
+🌐 Web / İnternet
+Web scraper → sitelerden veri çekmek (BeautifulSoup, requests)
+
+Basit web sitesi → Flask veya Django ile
+
+API entegrasyonu → örn. hava durumu, kripto fiyatları
+
+📊 Veri / Analiz
+Grafik çizici → matplotlib, seaborn
+
+Excel/CSV okuyucu → pandas ile veri analizi
+
+Basit rapor oluşturucu
