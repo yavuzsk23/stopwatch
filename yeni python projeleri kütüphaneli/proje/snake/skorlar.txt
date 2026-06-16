@@ -1,8 +1,0 @@
-
-Murat:600
-Mehmet:1500
-gamze:2250
-mustafa:1050
-yavuz:2400
-yavuz:2550
-yavuzsk23:150
