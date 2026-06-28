@@ -67,27 +67,3 @@ Bu proje, yüksek hassasiyetli sistem zamanlayıcılarını kullanarak milisaniy
 
 </details>
 
----
-
-## 💻 Code Architecture Overview
-
-The core logic separates the UI rendering layer from the internal stopwatch engine. Below is the structured logical flow of the calculation mechanism:
-
-```csharp
-// Core stopwatch execution model with safety checks
-try
-{
-    if (isTracking)
-    {
-        long currentTicks = DateTime.Now.Ticks;
-        elapsedMilliseconds = (currentTicks - startTicks) / TimeSpan.TicksPerMillisecond;
-        
-        // Dynamic Lap Recording System
-        RecordLapTime(elapsedMilliseconds);
-    }
-}
-catch (Exception ex)
-{
-    // High-level system exception logs
-    Console.WriteLine($"System Error during execution: {ex.Message}");
-}
