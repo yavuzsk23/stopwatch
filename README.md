@@ -15,7 +15,6 @@ This is an advanced desktop stopwatch application developed to deliver exact tim
 ###  Key Features
 * **High-Precision Timing:** Uses system-level counters to measure intervals with microsecond accuracy.
 * **Lap & Split Timing:** Record multiple laps dynamically without pausing the main thread.
-* **Error & Exception Handling:** Structured with rigorous try-catch blocks to prevent unexpected crashes during heavy system load.
 * **Optimized UI:** Designed to run smoothly without dragging down your GPU or RAM resources.
 
 ###  Technical Specifications
@@ -35,7 +34,6 @@ Dies ist eine fortschrittliche Desktop-Stoppuhr-Anwendung, die für präzise Zei
 ###  Hauptmerkmale
 * **Hochpräzise Zeitmessung:** Verwendet Systemzähler, um Intervalle mit Mikrosekunden-Genauigkeit zu messen.
 * **Runden- und Zwischenzeiten:** Dynamische Aufzeichnung mehrerer Runden, ohne den Haupt-Thread zu blockieren.
-* **Fehlerbehandlung:** Robust strukturiert mit try-catch-Blöcken, um unerwartete Abstürze bei hoher Systemlast zu verhindern.
 * **Ressourceneffizienz:** Optimierte UI-Aktualisierungen, die RAM und Grafikkarte entlasten.
 
 ###  Technische Spezifikationen
@@ -54,7 +52,6 @@ Bu proje, yüksek hassasiyetli sistem zamanlayıcılarını kullanarak milisaniy
 ###  Öne Çıkan Özellikler
 * **Yüksek Hassasiyetli Zamanlayıcı:** Mikrosaniye seviyesinde doğruluk sağlamak için donanım tabanlı sayaçları kullanır.
 * **Tur (Lap) Sistemi:** Ana iş parçacığını (thread) dondurmadan, dinamik olarak sınırsız sayıda tur süresi kaydeder.
-* **Gelişmiş Hata Yönetimi:** Beklenmedik sistem yüklerinde uygulamanın çökmesini engellemek için yapılandırılmış `try-catch` blokları içerir.
 * **Performans Optimizasyonu:** RAM ve ekran kartı (GPU) kaynaklarını sömürmeyecek şekilde optimize edilmiş arayüz güncellemelerine sahiptir.
 
 ###  Teknik Altyapı
